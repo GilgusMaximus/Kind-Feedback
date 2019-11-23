@@ -114,5 +114,9 @@ class FeedbackGenerator:
         except Exception as err:
             print(err)
 
+
+def main():
+    FeedbackGenerator().run()
+
 if __name__ == '__main__':
-    FeedbackGenerator.run(FeedbackGenerator())
+    main()
