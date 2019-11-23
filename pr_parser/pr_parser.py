@@ -33,12 +33,10 @@ class AzureService:
                                   "language": "en",
                                   "text": comment}
                                  )
-            print(documents)
             response = self.client.sentiment(documents=documents)
             total_score = 0.0
             for document in response.documents:
                 total_score += document.score
-                print("{:.2f}".format(document.score))
 
             return total_score/len(documents)
 
@@ -62,7 +60,7 @@ class RecommendationDispatcher:
             user_email = cfg["email"]
             password = cfg["password"]
 
-        with open('../userType.json') as json_file:
+        with open('../userDetails.json') as json_file:
             data = json.load(json_file)
             supervisor_email = data["supervisor_email"]
 
@@ -124,22 +122,16 @@ class FeedbackGenerator:
         RecommendationDispatcher().send_recommendation_mail(message=message)
 
     def run(self):
-
         base_url = 'https://api.github.com'
         mock_repo_url = "/repos/GilgusMaximus/Kind-Feedback"
-        mozilla_url = "/repos/mozilla-mobile/firefox-ios"
-        mozilla_closed_issue_comments = '/issues/5788/comments'
 
         # determine closed PRs
         try:
             closed_prs_response = requests.get(base_url + mock_repo_url + '/pulls', params=dict(state="closed"))
-            print(base_url + mozilla_url + '/pulls')
-            print(closed_prs_response)
 
             for closed_pr in closed_prs_response.json():
 
                 # only closed today
-                print(closed_pr)
                 unformated_closing_date = closed_pr["closed_at"]
                 closing_date = datetime.strptime(unformated_closing_date, "%Y-%m-%dT%H:%M:%SZ").date()
 
