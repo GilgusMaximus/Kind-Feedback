@@ -1,6 +1,8 @@
 import requests
 import json
 import os
+import smtplib
+
 from datetime import datetime, timedelta
 
 from azure.cognitiveservices.language.textanalytics import TextAnalyticsClient
@@ -44,6 +46,20 @@ class AzureService:
         except Exception as err:
             print("Encountered exception. {}".format(err), err)
         pass
+
+
+class RecommendationDispatcher:
+    def __init__(self):
+        username = ""
+        password = ""
+
+    server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+    server.login("your username", "your password")
+    server.sendmail(
+        "from@address.com",
+        "to@address.com",
+        "this message is from python")
+    server.quit()
 
 
 class FeedbackGenerator:
