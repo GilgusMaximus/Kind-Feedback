@@ -1,0 +1,14 @@
+{
+  "type1": {
+    "pos": "Dear Mr X, Mr Y did very well during the last project. You should announce that in front of the team.",
+    "neg": "Dear Mr X, Mr Y did not that well during the last project. You can write an email and point out that great impact of the task in the event of success."
+  },
+  "type2": {
+    "pos": "Dear Mr X, Mr Y did very well during the last project. How about giving him a voucher. Send and Email and thank for reaching goals and expectations. Best",
+    "neg": "Dear Mr X, Mr Y did not that well during the last project. You can send an email and point out the goals. You should clearly structure the tasks and expectations. Put a reward in case of improvement in perspective."
+  },
+  "type3": {
+    "pos": "Dear Mr X, Mr Y did very well during the last project. You should give him the opportunity to assign to advanced training.",
+    "neg": "Dear Mr X, Mr Y did not that well during the last project. You can invite him for coffee and talk about the task."
+  }
+}
