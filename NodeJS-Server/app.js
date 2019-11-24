@@ -3,6 +3,7 @@ const fs = require('fs');
 const express = require('express');
 const path = require('path')
 const bodyParser = require('body-parser');
+const childP = require('child_process');
 
 //setup
 let app = express();
@@ -30,6 +31,7 @@ app.post('/submission', function(req, res) {
   let jsObject = {};
   jsObject.type = 1;
   jsObject.id = req.body.id;
+  jsObject.supervisor_email = req.body.mail;
   fs.writeFileSync("../userDetails.json", JSON.stringify(jsObject));
   res.end();
 });
@@ -37,5 +39,8 @@ app.post('/submission', function(req, res) {
 //home page
 app.get('/', function(req, res) {
   res.render("questionaire");
+  var subprocess = childP.spawnSync('python', [
+    "-u",
+    path.join("../pr_parser", 'pr_parser.py')]);
   res.end();
 });
