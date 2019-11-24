@@ -1,0 +1,3 @@
+from pr_parser import pr_parser
+
+pr_parser.main()
