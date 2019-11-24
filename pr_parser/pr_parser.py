@@ -62,7 +62,7 @@ class RecommendationDispatcher:
             self.user_email = cfg["username"]
             self.password = cfg["password"]
 
-        with open('../userDetail.json') as json_file:
+        with open('../userDetails.json') as json_file:
             data = json.load(json_file)
             self.supervisor_email = data["supervisor_email"]
 
@@ -83,7 +83,7 @@ class FeedbackGenerator:
     POLARITY_THRESHOLD = 0.5
 
     def __init__(self):
-        user_details_path = '../userDetail.json'
+        user_details_path = '../userDetails.json'
         with open(user_details_path) as json_file:
             data = json.load(json_file)
             self.personality_type = data["type"]
