@@ -30,7 +30,7 @@ app.post('/submission', function(req, res) {
   console.log(req.body);
   let jsObject = {};
   jsObject.type = 1;
-  jsObject.id = req.body.id;
+  jsObject.github_id = req.body.id;
   jsObject.supervisor_email = req.body.mail;
   fs.writeFileSync("../userDetails.json", JSON.stringify(jsObject));
   res.end();
