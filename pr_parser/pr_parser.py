@@ -1,6 +1,7 @@
 import requests
 import json
 import smtplib
+import email
 
 from datetime import datetime, timedelta
 
@@ -46,40 +47,43 @@ class AzureService:
 
 
 class RecommendationDispatcher:
-    host: str
-    port: int
-    user_email: str
-    password: str
-    supervisor_email: str
+
 
     def __init__(self):
-        with open('email_config') as json_file:
+        host: str
+        port: int
+        user_email: str
+        password: str
+        supervisor_email: str
+        with open('detail/email_config.json') as json_file:
             cfg = json.load(json_file)
-            host = cfg["host"]
-            port = cfg["port"]
-            user_email = cfg["email"]
-            password = cfg["password"]
+            self.host = cfg["host"]
+            self.port = cfg["port"]
+            self.user_email = cfg["username"]
+            self.password = cfg["password"]
 
         with open('../userDetails.json') as json_file:
             data = json.load(json_file)
-            supervisor_email = data["supervisor_email"]
+            self.supervisor_email = data["supervisor_email"]
 
     def send_recommendation_mail(self, message):
-        server = smtplib.SMTP_SSL(self.host, self.port)
-        server.login(user=self.user_email, password=self.password)
-        server.sendmail(
-            from_addr=self.user_email,
-            to_addrs=self.supervisor_email,
-            msg=message
-        )
-        server.quit()
-
+        try:
+            with smtplib.SMTP(self.host, self.port) as server:
+                server.ehlo()
+                server.starttls()
+                server.ehlo()
+                server.login(self.user_email, self.password)
+                msg = 'Subject: {}\n\n{}'.format("Mr. Gerhardt's Pull Request was merged recently", message)
+                server.sendmail(from_addr=self.user_email, to_addrs=self.supervisor_email, msg=message)
+                print('Email sent successfully')
+        except Exception as err:
+            print('Email not sent', err)
 
 class FeedbackGenerator:
     POLARITY_THRESHOLD = 0.5
 
     def __init__(self):
-        user_details_path = '../userType.json'
+        user_details_path = '../userDetails.json'
         with open(user_details_path) as json_file:
             data = json.load(json_file)
             self.personality_type = data["type"]
@@ -115,52 +119,61 @@ class FeedbackGenerator:
                 # negative
                 else:
                     feedback = user_type["neg"]
+        print('Feedback to be sent:', feedback)
         return feedback
 
     def send_recommended_feedback(self, sentiment):
         message = self.get_recommended_feedback(personality_type=self.personality_type, sentiment=sentiment)
-        RecommendationDispatcher().send_recommendation_mail(message=message)
+        rd = RecommendationDispatcher()
+        rd.send_recommendation_mail(message=message)
 
     def run(self):
+
         base_url = 'https://api.github.com'
         mock_repo_url = "/repos/GilgusMaximus/Kind-Feedback"
 
         # determine closed PRs
-        try:
-            closed_prs_response = requests.get(base_url + mock_repo_url + '/pulls', params=dict(state="closed"))
+        closed_prs_response = requests.get(base_url + mock_repo_url + '/pulls', params=dict(state="closed"))
+        if closed_prs_response.status_code != 200:
+            print("Not successful:", closed_prs_response.status_code)
+            raise SystemExit
+        for closed_pr in closed_prs_response.json():
 
-            for closed_pr in closed_prs_response.json():
+            # only closed today
+            unformated_closing_date = closed_pr["closed_at"]
+            closing_date = datetime.strptime(unformated_closing_date, "%Y-%m-%dT%H:%M:%SZ").date()
 
-                # only closed today
-                unformated_closing_date = closed_pr["closed_at"]
-                closing_date = datetime.strptime(unformated_closing_date, "%Y-%m-%dT%H:%M:%SZ").date()
+            # only by submitter
+            submitter_id = closed_pr["user"]["login"]
+            print((datetime.now() - timedelta(1)).date())
+            if closing_date >= (datetime.now() - timedelta(1)).date() and submitter_id == self.github_id:
 
-                # only by submitter
-                submitter_id = closed_pr["user"]["login"]
+                # get comments of reviewers (not submitter) of closed pr
+                issue_number = str(closed_pr["number"])
+                pr_comments_response = requests.get(base_url + mock_repo_url + '/issues' + '/' + issue_number + '/comments')
+                if pr_comments_response.status_code != 200:
+                    print("Not successful:", pr_comments_response.status_code)
+                    raise SystemExit
+                comments = []
+                sentiment = 0.0
+                for comment in pr_comments_response.json():
+                    # filter comments by submitter
+                    if comment["user"]["login"] != self.github_id:
+                        body = comment["body"]
+                        comments.append(body)
 
-                if closing_date == (datetime.now() - timedelta(1)).date() and submitter_id == self.github_id:
+                sentiment = self.azure_service.get_sentiment_for(comments)
 
-                    # get comments of reviewers (not submitter) of closed pr
-                    issue_number = str(closed_pr["number"])
-                    pr_comments_response = requests.get(base_url + mock_repo_url + '/issues' + '/' + issue_number + '/comments')
+                print('Sentiment =', sentiment, 'for', len(comments), 'comments')
+                # abschicken
+                self.send_recommended_feedback(sentiment=sentiment)
+            else:
+                print('Date:', closing_date, 'Submitter:', submitter_id)
 
-                    comments = []
-                    sentiment = 0.0
-                    for comment in pr_comments_response.json():
-                        # filter comments by submitter
-                        if comment["user"]["login"] != self.github_id:
-                            body = comment["body"]
-                            comments.append(body)
-
-                    sentiment = self.azure_service.get_sentiment_for(comments)
-
-                    # abschicken
-                    self.send_recommended_feedback(sentiment=sentiment)
-
-        except Exception as err:
-            print(err)
+def main():
+    fg = FeedbackGenerator()
+    fg.run()
 
 
 if __name__ == '__main__':
-    FeedbackGenerator().run()
-
+    main()

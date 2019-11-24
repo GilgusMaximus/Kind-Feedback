@@ -1,6 +1,6 @@
 {
   "type1": {
-    "pos": "Dear Mr X, Mr Y did very well during the last project. You should announce that in front of the team.",
+    "pos": "Dear Mr Gerhardt, Mr. Hohmann did very well during the last project. The sentiment analysis showed that he would appreciate if you'd compliment him in front of the team.",
     "neg": "Dear Mr X, Mr Y did not that well during the last project. You can write an email and point out that great impact of the task in the event of success."
   },
   "type2": {

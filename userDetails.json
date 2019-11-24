@@ -1,1 +1,5 @@
-{ "type" : 1, "github_id" : "adello-medium", "supervisor_email": "kindfeedback@muellmail.com" }
+{
+  "type" : 1,
+  "github_id" : "adello-medium",
+  "supervisor_email": "lukas.gerhardt@tum.de"
+}
